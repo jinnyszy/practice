@@ -1,11 +1,19 @@
-import { useParams } from "react-router-dom";
+import { useState, useContext } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Carousel from "./Carousel";
 import fetchPet from "./fetchPet";
+import ErrorBoundary from "./ErrorBoundary";
+import Modal from "./Modal";
+import AdoptedPetContext from "./AdoptedPageContext";
 
 const Details = () => {
     const { id } = useParams();
-    //fetchPet is id does not exist in cache
+    const [showModal, setShowModal] = useState(false);
+    const navigate = useNavigate();
+    // eslint-disable-next-line no-unused-vars
+    const [_, setAdoptedPet] = useContext(AdoptedPetContext);
+    //fetchPet if id does not exist in cache
     const results = useQuery(["details", id], fetchPet);
 
     if (results.isLoading) {
@@ -24,11 +32,35 @@ const Details = () => {
             <div>
                 <h1>{pet.name}</h1>
                 <h2>{pet.animal} - {pet.breed} - {pet.city},{pet.state}</h2>
-                <button>Adopt</button>
+                <button onClick={() => setShowModal(true)}>Adopt</button>
                 <p>{pet.description}</p>
+                {
+                    showModal ? (
+                        <Modal>
+                            <div>
+                                <h1>Would you like to adopt {pet.name}?</h1>
+                                <div className="buttons">
+                                    <button onClick={() => {
+                                        setAdoptedPet(pet);
+                                        navigate("/");
+                                    }}>YES</button>
+                                    <button onClick={() => setShowModal(false)}>NO</button>
+                                </div>
+                            </div>
+                        </Modal>
+                    ) : null
+                }
             </div>
         </div>
     )
 };
 
-export default Details;
+function DetailsErrorBoundary() {
+    return (
+        <ErrorBoundary errorMsg={<h2>haha error</h2>}>
+            <Details />
+        </ErrorBoundary>
+    )
+}
+
+export default DetailsErrorBoundary;
